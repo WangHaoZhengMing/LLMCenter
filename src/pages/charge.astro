@@ -1,0 +1,86 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+import { appPath } from "../lib/routes";
+---
+
+<AppLayout title="Charge | LLMCenter">
+  <section class="page-head">
+    <h1>Charge</h1>
+    <p class="lead">Enter a prepaid credit amount and pay through Stripe Checkout.</p>
+  </section>
+
+  <section class="panel stack">
+    <form class="form" data-charge-form>
+      <div class="field">
+        <label for="amount">Amount in USD</label>
+        <input
+          id="amount"
+          name="amount"
+          type="number"
+          min="1"
+          max="500"
+          step="0.01"
+          inputmode="decimal"
+          placeholder="10.00"
+          required
+        />
+      </div>
+      <div class="actions">
+        <button class="button" type="submit">Continue to Stripe</button>
+        <a class="button secondary" href={appPath("/create-account")}>Create account first</a>
+      </div>
+      <p class="status" data-status></p>
+    </form>
+  </section>
+
+    <script>
+      import { functionsBaseUrl, supabase } from "../lib/supabase";
+      import { appPath } from "../lib/routes";
+
+    const form = document.querySelector("[data-charge-form]");
+    const status = document.querySelector("[data-status]");
+
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!(form instanceof HTMLFormElement)) return;
+
+      status?.classList.remove("error");
+
+      const formData = new FormData(form);
+      const amount = Number(formData.get("amount"));
+      const amountCents = Math.round(amount * 100);
+
+      if (!Number.isInteger(amountCents) || amountCents < 100 || amountCents > 50000) {
+        status?.classList.add("error");
+        if (status) status.textContent = "Enter an amount between $1.00 and $500.00.";
+        return;
+      }
+
+      if (status) status.textContent = "Creating Stripe session...";
+
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        window.location.href = appPath("/create-account");
+        return;
+      }
+
+      const response = await fetch(`${functionsBaseUrl}/create-checkout-session`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session.access_token}`,
+        },
+        body: JSON.stringify({ amount_cents: amountCents }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        status?.classList.add("error");
+        if (status) status.textContent = payload.error ?? "Could not create checkout session.";
+        return;
+      }
+
+      window.location.href = payload.url;
+    });
+  </script>
+</AppLayout>

@@ -1,0 +1,61 @@
+---
+import "../styles/global.css";
+import { appPath } from "../lib/routes";
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href={appPath("/favicon.svg")} />
+    <link rel="icon" href={appPath("/favicon.ico")} />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <div class="shell">
+      <header class="topbar">
+        <a class="brand" href={appPath("/")}>LLMCenter</a>
+        <nav class="nav" aria-label="Primary">
+          <a href={appPath("/")}>Home</a>
+          <a href={appPath("/charge")}>Charge</a>
+          <a href={appPath("/new-api")}>New API</a>
+          <a href={appPath("/dashboard")}>Dashboard</a>
+          <a href={appPath("/login")} data-login-link>Login</a>
+          <a class="button" href={appPath("/create-account")} data-auth-link>Create account</a>
+          <button type="button" data-sign-out hidden>Sign out</button>
+        </nav>
+      </header>
+      <main class="main">
+        <slot />
+      </main>
+    </div>
+    <script>
+      import { supabase } from "../lib/supabase";
+      import { appPath } from "../lib/routes";
+
+      const authLink = document.querySelector("[data-auth-link]");
+      const loginLink = document.querySelector("[data-login-link]");
+      const signOutButton = document.querySelector("[data-sign-out]");
+      const { data } = await supabase.auth.getSession();
+
+      if (data.session && authLink && signOutButton) {
+        authLink.textContent = data.session.user.email ?? "Account";
+        authLink.setAttribute("href", appPath("/dashboard"));
+        loginLink?.setAttribute("hidden", "");
+        signOutButton.removeAttribute("hidden");
+      }
+
+      signOutButton?.addEventListener("click", async () => {
+        await supabase.auth.signOut();
+        window.location.href = appPath("/");
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,58 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+import { appPath } from "../lib/routes";
+---
+
+<AppLayout title="Login | LLMCenter">
+  <section class="page-head">
+    <h1>Login</h1>
+    <p class="lead">Existing users can login here. New users should create an account first.</p>
+  </section>
+
+  <form class="form panel" data-login-form>
+    <div class="field">
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="email" required />
+    </div>
+    <div class="field">
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required minlength="8" />
+    </div>
+    <div class="actions">
+      <button class="button" type="submit">Login</button>
+      <a class="button secondary" href={appPath("/create-account")}>Create account</a>
+    </div>
+    <p class="status" data-status></p>
+  </form>
+
+    <script>
+      import { supabase } from "../lib/supabase";
+      import { appPath } from "../lib/routes";
+
+    const form = document.querySelector("[data-login-form]");
+    const status = document.querySelector("[data-status]");
+
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!(form instanceof HTMLFormElement)) return;
+
+      status?.classList.remove("error");
+      if (status) status.textContent = "Working...";
+
+      const formData = new FormData(form);
+      const email = String(formData.get("email") ?? "");
+      const password = String(formData.get("password") ?? "");
+
+      const result = await supabase.auth.signInWithPassword({ email, password });
+
+      if (result.error) {
+        status?.classList.add("error");
+        if (status) status.textContent = result.error.message;
+        return;
+      }
+
+      if (status) status.textContent = "Logged in.";
+      window.location.href = appPath("/dashboard");
+    });
+  </script>
+</AppLayout>

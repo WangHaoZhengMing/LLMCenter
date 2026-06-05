@@ -1,0 +1,70 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+---
+
+<AppLayout title="New API | LLMCenter">
+  <section class="page-head">
+    <h1>New API</h1>
+    <p class="lead">Create a new API key. The raw key is shown once.</p>
+  </section>
+
+  <section class="panel stack">
+    <form class="form" data-key-form>
+      <div class="field">
+        <label for="key-name">Key name</label>
+        <input id="key-name" name="name" type="text" placeholder="Production app" required />
+      </div>
+      <button class="button" type="submit">Create key</button>
+    </form>
+    <p class="status" data-status></p>
+    <div class="key-output" data-key-output hidden></div>
+  </section>
+
+    <script>
+      import { functionsBaseUrl, supabase } from "../lib/supabase";
+      import { appPath } from "../lib/routes";
+
+    const form = document.querySelector("[data-key-form]");
+    const status = document.querySelector("[data-status]");
+    const output = document.querySelector("[data-key-output]");
+
+    form?.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      if (!(form instanceof HTMLFormElement)) return;
+
+      status?.classList.remove("error");
+      if (status) status.textContent = "Creating key...";
+      output?.setAttribute("hidden", "");
+
+      const { data } = await supabase.auth.getSession();
+      if (!data.session) {
+        window.location.href = appPath("/create-account");
+        return;
+      }
+
+      const formData = new FormData(form);
+      const response = await fetch(`${functionsBaseUrl}/create-api-key`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${data.session.access_token}`,
+        },
+        body: JSON.stringify({ name: String(formData.get("name") ?? "") }),
+      });
+
+      const payload = await response.json();
+      if (!response.ok) {
+        status?.classList.add("error");
+        if (status) status.textContent = payload.error ?? "Could not create API key.";
+        return;
+      }
+
+      if (status) status.textContent = "Save this key now. It will not be shown again.";
+      if (output) {
+        output.textContent = payload.api_key;
+        output.removeAttribute("hidden");
+      }
+      form.reset();
+    });
+  </script>
+</AppLayout>

@@ -1,0 +1,44 @@
+---
+import AppLayout from "../layouts/AppLayout.astro";
+import { appPath } from "../lib/routes";
+---
+
+<AppLayout title="LLMCenter">
+  <section class="hero">
+    <div>
+      <h1>Sell your API with prepaid credits.</h1>
+      <p>
+        A small Stripe + Supabase starter for API products: account creation,
+        balance recharge, API key creation, and payment webhooks without running
+        your own server.
+      </p>
+      <div class="actions">
+        <a class="button" href={appPath("/create-account")}>Create account</a>
+        <a class="button secondary" href={appPath("/login")}>Login</a>
+      </div>
+    </div>
+    <div class="panel">
+      <h2>Stack</h2>
+      <div class="stack">
+        <p><strong>Astro</strong><br /><span class="muted">Static pages on Vercel or Netlify.</span></p>
+        <p><strong>Supabase</strong><br /><span class="muted">Auth, Postgres, row-level security, Edge Functions.</span></p>
+        <p><strong>Stripe Checkout</strong><br /><span class="muted">Hosted payment page and signed webhook events.</span></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="grid">
+    <div class="panel">
+      <h3>1. Create account</h3>
+      <p class="muted">Users sign up with Supabase Auth. A profile row stores their credit balance.</p>
+    </div>
+    <div class="panel">
+      <h3>2. Recharge</h3>
+      <p class="muted">The Charge page creates a Stripe Checkout Session through an Edge Function.</p>
+    </div>
+    <div class="panel">
+      <h3>3. Issue keys</h3>
+      <p class="muted">The New API page creates a key once, stores only its hash, and shows the raw key once.</p>
+    </div>
+  </section>
+</AppLayout>
